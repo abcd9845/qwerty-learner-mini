@@ -1,7 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { ProfileManager } from '../components/ProfileManager'
 import { computeStreak, dayKey } from '../lib/srs'
 import { poolOf, todayInfo } from '../lib/pool'
 import { useAppData, type ModeId } from '../lib/storage'
+import { useProfileStore } from '../lib/profiles'
 import { MODES, modeName } from '../modes'
 import type { SessionSource } from '../modes/useSession'
 
@@ -12,6 +14,9 @@ interface HomeProps {
 
 export function Home({ onStart, goPage }: HomeProps) {
   const data = useAppData()
+  const { profiles, currentId } = useProfileStore()
+  const [mgrOpen, setMgrOpen] = useState(false)
+  const currentName = profiles.find((p) => p.id === currentId)?.name ?? '同学'
   const pool = useMemo(() => poolOf(data.settings.units), [data.settings.units])
   const info = useMemo(() => todayInfo(data, pool), [data, pool])
   const mistakeCount = Object.keys(data.mistakes).length
@@ -21,9 +26,14 @@ export function Home({ onStart, goPage }: HomeProps) {
   return (
     <div className="page home">
       <header className="home-header">
+        <button className="profile-chip" onClick={() => setMgrOpen(true)} aria-label="切换用户">
+          👤 {currentName} <span className="dim">切换 ▾</span>
+        </button>
         <h1>背词课</h1>
         <p>外研版七上 · 默写 / 听写 / 速刷 / 填空</p>
       </header>
+
+      {mgrOpen && <ProfileManager onClose={() => setMgrOpen(false)} />}
 
       <button className="today-card" onClick={() => onStart(data.settings.lastMode, info.queue.length > 0 ? 'today' : 'free')}>
         <div className="today-info">
@@ -62,7 +72,7 @@ export function Home({ onStart, goPage }: HomeProps) {
         <button className="quick-btn" onClick={() => goPage('settings')}>⚙️ 设置</button>
       </div>
 
-      <p className="foot-note">数据只存在手机本地 · 到期词优先复习（Leitner 记忆盒）</p>
+      <p className="foot-note">数据只存在本机浏览器 · 多人可各建一个用户 · 到期词优先复习（Leitner 记忆盒）</p>
     </div>
   )
 }

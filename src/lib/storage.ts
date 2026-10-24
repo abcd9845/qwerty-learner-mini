@@ -1,10 +1,24 @@
 /**
  * localStorage 持久化（无后端，仅本地）。
- * 单一数据块存储 + 订阅更新，React 侧通过 useAppData() 读取。
+ * 多用户（profile）：每个用户一份独立 AppData，存 `qlm:v2:<profileId>:data`；
+ * 用户列表/当前用户存 `qlm:profiles`（注册表见 profiles.ts）。
+ * 订阅按「当前用户」工作：切换/删除用户后整体重载并 emit，
+ * 所有 useAppData() 页面（首页/统计/错题本/设置/练习）立即刷新为新用户数据。
  */
 import { useSyncExternalStore } from 'react'
 import type { Unit, Word } from '../data/words'
 import { boxAfterCorrect, boxAfterWrong, dayKey, type WordProgress } from './srs'
+import {
+  createProfile as createProfileOp,
+  deleteProfile as deleteProfileOp,
+  getProfileStore,
+  migrateLegacyData,
+  readProfileData,
+  renameProfile as renameProfileOp,
+  switchCurrentProfile,
+  writeProfileData,
+  type Profile,
+} from './profiles'
 
 export type ModeId = 'dictation' | 'listening' | 'choice' | 'cloze'
 
@@ -42,8 +56,6 @@ export interface AppData {
   /** 错题本：key -> 加入时间戳 */
   mistakes: Record<string, number>
 }
-
-export const STORAGE_KEY = 'qwerty-learner-mini:data'
 
 export const ALL_UNITS: Unit[] = ['Starter', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6']
 
@@ -99,32 +111,32 @@ function sanitize(raw: unknown): AppData {
   }
 }
 
-function load(): AppData {
+/** 读取指定用户的数据块（无数据/损坏时回退默认值） */
+function loadFor(id: string | null): AppData {
+  if (!id) return cloneDefault()
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return cloneDefault()
-    return sanitize(JSON.parse(raw))
+    const raw = readProfileData(id)
+    return raw ? sanitize(JSON.parse(raw)) : cloneDefault()
   } catch {
     return cloneDefault()
   }
 }
 
-let current: AppData = load()
+/** 模块初始化：按 localStorage 里记录的当前用户加载数据 */
+let current: AppData = loadFor(getProfileStore().currentId)
 const listeners = new Set<() => void>()
 
-function persist() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(current))
-  } catch {
-    /* 存储不可用时静默降级为内存模式 */
-  }
+function persist(): void {
+  const id = getProfileStore().currentId
+  // 尚未建立用户时数据只留在内存（App 会先引导建用户）
+  if (id) writeProfileData(id, JSON.stringify(current))
 }
 
-function emit() {
+function emit(): void {
   for (const fn of listeners) fn()
 }
 
-function update(mutate: (d: AppData) => AppData) {
+function update(mutate: (d: AppData) => AppData): void {
   current = mutate(current)
   persist()
   emit()
@@ -141,6 +153,44 @@ export function useAppData(): AppData {
 
 export function getData(): AppData {
   return current
+}
+
+/** 按当前用户整体重载数据并通知所有订阅页面 */
+function reloadCurrent(): void {
+  current = loadFor(getProfileStore().currentId)
+  emit()
+}
+
+/** 切换当前用户：数据块整体换成该用户的，所有页面立即刷新 */
+export function switchProfile(id: string): boolean {
+  if (!switchCurrentProfile(id)) return false
+  reloadCurrent()
+  return true
+}
+
+/** 新建用户并切换过去；若存在旧版（未分用户）数据，自动搬到该用户名下 */
+export function createProfile(name: string): Profile {
+  const p = createProfileOp(name)
+  migrateLegacyData(p.id)
+  reloadCurrent()
+  return p
+}
+
+/** 重命名用户（只改注册表，不动数据） */
+export function renameProfile(id: string, name: string): void {
+  renameProfileOp(id, name)
+}
+
+/** 删除用户及其全部数据；若删的是当前用户自动切到剩余的第一个（删光则由 App 引导重建） */
+export function deleteProfile(id: string): void {
+  deleteProfileOp(id)
+  reloadCurrent()
+}
+
+/** 当前用户（可能为 null：尚未建用户） */
+export function currentProfile(): Profile | null {
+  const { profiles, currentId } = getProfileStore()
+  return profiles.find((p) => p.id === currentId) ?? null
 }
 
 /** 进度键：统一小写去空格 */
@@ -195,7 +245,7 @@ export function setSettings(patch: Partial<Settings>): void {
   update((d) => ({ ...d, settings: sanitize({ settings: { ...d.settings, ...patch } }).settings }))
 }
 
-/** 清空学习进度（保留设置） */
+/** 清空学习进度（保留设置，仅当前用户） */
 export function clearProgress(): void {
   update((d) => ({ ...d, progress: {}, daily: {}, mistakes: {} }))
 }
@@ -209,17 +259,52 @@ export function removeMistake(word: string): void {
   })
 }
 
-/** 导出全部数据（进度+设置）为 JSON 字符串，供复制保存 */
-export function exportData(): string {
-  return JSON.stringify(current, null, 2)
+/* ============ 导出 / 导入（只针对当前用户） ============ */
+
+/** 导出文件格式：带用户名，但不含其它任何用户的数据 */
+export interface ExportFile {
+  app: 'qwerty-learner-mini'
+  format: 2
+  exportedAt: number
+  profile: { name: string }
+  data: AppData
 }
 
-/** 从 JSON 导入数据，成功返回 true */
+function isExportFile(v: unknown): v is ExportFile {
+  if (typeof v !== 'object' || v === null) return false
+  const r = v as Partial<ExportFile>
+  return r.app === 'qwerty-learner-mini' && r.format === 2 && typeof r.data === 'object' && r.data !== null
+}
+
+/** 看起来像旧版导出的纯 AppData（version===1 或带 settings） */
+function looksLikeAppData(v: unknown): boolean {
+  if (typeof v !== 'object' || v === null) return false
+  const r = v as Record<string, unknown>
+  return r.version === 1 || r.settings !== undefined
+}
+
+/** 导出【当前用户】的全部数据为 JSON 字符串（文件里带用户名，不含其它用户） */
+export function exportData(): string {
+  const file: ExportFile = {
+    app: 'qwerty-learner-mini',
+    format: 2,
+    exportedAt: Date.now(),
+    profile: { name: currentProfile()?.name ?? '' },
+    data: current,
+  }
+  return JSON.stringify(file, null, 2)
+}
+
+/** 从 JSON 导入数据，覆盖【当前用户】；兼容旧版纯 AppData 格式。成功返回 true */
 export function importData(json: string): boolean {
   try {
-    const parsed = sanitize(JSON.parse(json))
-    if (parsed.version !== 1) return false
-    update(() => parsed)
+    const parsed: unknown = JSON.parse(json)
+    let raw: unknown
+    if (isExportFile(parsed)) raw = parsed.data
+    else if (looksLikeAppData(parsed)) raw = parsed
+    else return false
+    const clean = sanitize(raw)
+    update(() => clean)
     return true
   } catch {
     return false

@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react'
 import { PageHeader } from '../components/PageHeader'
 import { speak } from '../lib/speech'
-import { ALL_UNITS, clearProgress, exportData, importData, setSettings, useAppData } from '../lib/storage'
+import { ALL_UNITS, clearProgress, currentProfile, exportData, importData, setSettings, useAppData } from '../lib/storage'
 import type { Unit } from '../data/words'
 
 const DAILY_OPTIONS = [5, 10, 20, 30]
 
 export function SettingsPage({ onBack }: { onBack: () => void }) {
   const data = useAppData()
+  const profile = currentProfile()
   const s = data.settings
   const [importText, setImportText] = useState('')
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -118,8 +119,8 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
       </section>
 
       <section className="settings-group">
-        <h2>导出 / 导入进度</h2>
-        <p className="dim">导出：复制下面的 JSON 保存。导入：粘贴后点导入（仅本地，无后端）。</p>
+        <h2>导出 / 导入进度 <small className="dim">（当前用户：{profile?.name ?? '—'}）</small></h2>
+        <p className="dim">导出：复制下面的 JSON 保存（只含当前用户的数据）。导入：粘贴后点导入，会覆盖当前用户；在首页顶部可切换用户（仅本地，无后端）。</p>
         <textarea ref={exportRef} className="json-area" readOnly value={exportJson} onFocus={(e) => e.currentTarget.select()} />
         <button className="ghost-btn" onClick={copyExport}>复制导出内容</button>
         <textarea
@@ -134,7 +135,7 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
 
       <section className="settings-group danger">
         <h2>清空进度</h2>
-        <p className="dim">删除全部学习记录、每日统计和错题本（设置保留）。</p>
+        <p className="dim">删除当前用户的全部学习记录、每日统计和错题本（设置保留，其它用户不受影响）。</p>
         <button
           className="danger-btn"
           onClick={() => {

@@ -714,6 +714,144 @@ button {
 .mastery .seg.on.l4 { background: #4ade80; }
 .mastery .seg.on.l5 { background: #16a34a; }
 
+/* ============ 用户（profile） ============ */
+.profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow);
+  max-width: 100%;
+}
+
+.profile-chip:active {
+  transform: scale(0.97);
+}
+
+.profile-chip .dim {
+  font-size: 0.78rem;
+}
+
+.gate-card {
+  gap: 14px;
+}
+
+.gate-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.overlay-card {
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  border-radius: 18px;
+  padding: 18px 16px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.overlay-card h2 {
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.profile-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 46dvh;
+  overflow-y: auto;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--card-2);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.profile-row.current {
+  border-color: var(--blue);
+}
+
+.profile-row .profile-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: 0.98rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-row .profile-name:disabled {
+  color: var(--text);
+  cursor: default;
+}
+
+.mini-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-btn.danger {
+  border-color: var(--red);
+}
+
+.profile-new {
+  display: flex;
+  gap: 8px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--card-2);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 1rem; /* ≥16px 防iOS 聚焦缩放 */
+}
+
+.name-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
 /* ============ 设置 ============ */
 .settings-group {
   background: var(--card);

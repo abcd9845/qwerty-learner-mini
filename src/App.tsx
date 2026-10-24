@@ -3,9 +3,11 @@ import { Home } from './pages/Home'
 import { Stats } from './pages/Stats'
 import { Mistakes } from './pages/Mistakes'
 import { SettingsPage } from './pages/Settings'
+import { ProfileGate } from './pages/ProfileGate'
 import { Practice } from './modes/Practice'
 import type { SessionSource } from './modes/useSession'
 import { setSettings, useAppData, type ModeId } from './lib/storage'
+import { useProfileStore } from './lib/profiles'
 import { setSoundEnabled } from './lib/sound'
 import { stopSpeak } from './lib/speech'
 
@@ -18,6 +20,7 @@ type Route =
 
 export default function App() {
   const data = useAppData()
+  const { profiles, currentId } = useProfileStore()
   const [route, setRoute] = useState<Route>({ page: 'home' })
 
   useEffect(() => {
@@ -28,6 +31,11 @@ export default function App() {
   useEffect(() => {
     if (route.page !== 'practice') stopSpeak()
   }, [route])
+
+  // 本地用户：没有任何用户（首次使用/全部删光）时先引导创建
+  if (profiles.length === 0 || currentId === null) {
+    return <ProfileGate />
+  }
 
   const goHome = () => setRoute({ page: 'home' })
 
