@@ -1,4 +1,4 @@
-// 本文件由 scripts/extract-words.mjs 生成，请勿手改。
+// 本文件由 scripts/extract-words.mjs 生成（--out src/data/words.ts），请勿手改。
 // 词库：外研版英语七年级上册（Starter + Unit 1 ~ Unit 6）单词与重点短语/句型。
 // 提取规则：英文 + 中文释义 + 单元；超长整句已剔除；已全局去重。
 

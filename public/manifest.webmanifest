@@ -1,0 +1,26 @@
+{
+  "name": "背词课 · 七上单词训练",
+  "short_name": "背词课",
+  "description": "外研版七年级上册单词/短语背诵训练：默写、听写、速刷、填空 + Leitner 记忆盒复习。",
+  "lang": "zh-CN",
+  "start_url": "/qwerty-learner-mini/",
+  "scope": "/qwerty-learner-mini/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "/qwerty-learner-mini/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/qwerty-learner-mini/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 一次性数据提取脚本：生成 src/words.ts（七年级上册·外研版 Starter–Unit 6 词库）。
+ * 一次性数据提取脚本：生成 src/data/words.ts（七年级上册·外研版 Starter–Unit 6 词库）。
  *
  * 数据来源（只读，不做任何修改）：
  *   - 词汇：--vocab-dir 指定的目录下 starter.ts / unit1.ts … unit6.ts，
@@ -17,7 +17,7 @@
  *
  * 用法（路径均由命令行传入）：
  *   node scripts/extract-words.mjs \
- *     --out src/words.ts \
+ *     --out src/data/words.ts \
  *     --vocab-dir <词汇数据目录> \
  *     --phrases <短语库文件> [--phrases <短语库文件> ...]
  */
@@ -148,7 +148,7 @@ function main() {
     },
   })
   if (!values.out || !values['vocab-dir'] || !values.phrases?.length) {
-    console.error('用法: node scripts/extract-words.mjs --out src/words.ts --vocab-dir <目录> --phrases <文件> [--phrases <文件>…]')
+    console.error('用法: node scripts/extract-words.mjs --out src/data/words.ts --vocab-dir <目录> --phrases <文件> [--phrases <文件>…]')
     process.exit(1)
   }
 
@@ -183,7 +183,7 @@ function main() {
     }
   }
 
-  // 4) 生成 src/words.ts
+  // 4) 生成 src/data/words.ts
   const lines = []
   for (const e of final) {
     lines.push(`  { word: ${JSON.stringify(e.word)}, meaning: ${JSON.stringify(e.meaning)}, unit: '${e.unit}' },`)
