@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { WORDS, type Word } from '../data/words'
-import { HiddenInput } from '../components/HiddenInput'
+import { useKeyboardInput } from '../components/HiddenInput'
 import { Slots } from '../components/Slots'
 import { speak } from '../lib/speech'
 import { wordKey } from '../lib/storage'
@@ -62,6 +62,8 @@ export function ClozeMode({ word, settings, onResult, advance }: ModeProps) {
   const onReveal = () => speak(cloze.keyword, { rate: settings.rate, volume: settings.volume })
 
   const { typed, hint, flash, done, onChar, onBackspace } = useTypeAnswer(cloze.keyword, onDone, onReveal)
+  // 把当前词的回调注册给练习层的常驻隐藏 input（切词时组件重挂载、回调自动更新）
+  useKeyboardInput({ onChar, onBackspace })
 
   const skip = () => {
     if (done || result !== null) return
@@ -73,7 +75,6 @@ export function ClozeMode({ word, settings, onResult, advance }: ModeProps) {
 
   return (
     <div className="mode cloze-mode">
-      <HiddenInput onChar={onChar} onBackspace={onBackspace} />
       <div className="prompt">
         <span className="unit-tag">{word.unit}</span>
         <p className="meaning-text">补全挖掉的单词 · 提示：{cloze.hint}</p>

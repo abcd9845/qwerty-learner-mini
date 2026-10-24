@@ -76,17 +76,19 @@ button {
 .bad { color: var(--red); }
 .warn { color: var(--amber); }
 
-/* ============ 隐藏输入（唤起软键盘用） ============ */
+/* ============ 隐藏输入（唤起软键盘用，常驻、不拦截点击） ============ */
 .hidden-input {
   position: fixed;
   top: 0;
   left: 0;
   width: 1px;
   height: 1px;
+  margin: 0;
   opacity: 0;
   border: none;
-  z-index: -1;
-  font-size: 16px; /* 防止 iOS 聚焦缩放 */
+  pointer-events: none; /* 不拦截点击；聚焦由练习区域点击统一处理 */
+  caret-color: transparent;
+  font-size: 16px; /* ≥16px 防止 iOS 聚焦缩放 */
 }
 
 /* ============ 顶栏 ============ */

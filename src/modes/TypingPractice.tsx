@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { HiddenInput } from '../components/HiddenInput'
+import { useKeyboardInput } from '../components/HiddenInput'
 import { Slots } from '../components/Slots'
 import { speak, speakSlow } from '../lib/speech'
 import { useTypeAnswer } from './useTypeAnswer'
@@ -28,6 +28,8 @@ export function TypingPractice({ variant, word, settings, onResult, advance }: M
   const onDone = (errors: number) => finish(errors === 0, errors === 0 ? 500 : 950)
   const onReveal = () => speak(word.word, { rate: settings.rate, volume: settings.volume })
   const { typed, hint, flash, onChar, onBackspace } = useTypeAnswer(word.word, onDone, onReveal)
+  // 把当前词的回调注册给练习层的常驻隐藏 input（切词时组件重挂载、回调自动更新）
+  useKeyboardInput({ onChar, onBackspace })
 
   // 听音模式：出新词自动朗读一次（组件按词重挂载，等价于每词一次）
   useEffect(() => {
@@ -41,8 +43,6 @@ export function TypingPractice({ variant, word, settings, onResult, advance }: M
 
   return (
     <div className="mode typing-mode">
-      <HiddenInput onChar={onChar} onBackspace={onBackspace} />
-
       {variant === 'dictation' ? (
         <div className="prompt">
           <span className="unit-tag">{word.unit}</span>
