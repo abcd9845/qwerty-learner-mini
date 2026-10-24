@@ -1,0 +1,305 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-2: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #38bdf8;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.hidden-input {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: none;
+  z-index: -1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.header p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.chip {
+  border: 1px solid var(--card-2);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.9rem;
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chip.on {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.pool-info {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.card {
+  position: relative;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px 12px 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.progress {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.word {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.15em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(2.4rem, 11vw, 4rem);
+  font-weight: 700;
+  line-height: 1.2;
+  min-height: 1.2em;
+}
+
+.letter {
+  position: relative;
+  color: #475569;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.letter.done {
+  color: var(--green);
+}
+
+.letter.current {
+  color: var(--text);
+  border-bottom: 4px solid var(--blue);
+  border-radius: 2px;
+  animation: blink 1s step-end infinite;
+}
+
+.letter.wrong {
+  color: var(--red);
+  animation: shake 0.25s;
+}
+
+.letter.wrong .hint-letter {
+  font-size: 0.45em;
+  line-height: 1;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.meaning {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+.unit-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--card-2);
+  color: var(--blue);
+  font-size: 0.8rem;
+  vertical-align: 2px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.stat {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.stat b {
+  display: block;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat b.green {
+  color: var(--green);
+}
+
+.stat b.red {
+  color: var(--red);
+}
+
+.stat span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.controls button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  background: var(--card-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.controls button:active {
+  transform: scale(0.96);
+}
+
+.controls button.on {
+  background: var(--blue);
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.controls button.primary {
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.tips {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.finished h2 {
+  margin-bottom: 4px;
+}
+
+.finished .stats {
+  margin-top: 14px;
+}
+
+.finished .primary {
+  margin-top: 20px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 32px;
+  font-size: 1.05rem;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 10px 32px;
+  }
+  .card {
+    padding: 24px 8px 20px;
+  }
+  .stat b {
+    font-size: 1.25rem;
+  }
+  .controls button {
+    padding: 9px 14px;
+  }
+}
