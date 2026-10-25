@@ -987,3 +987,49 @@ button {
 .settings-group.danger {
   border-color: color-mix(in srgb, var(--red) 40%, var(--card-2));
 }
+
+/* ============ 首页：选择单元 + 打乱出题顺序 ============ */
+
+.unit-picker {
+  margin: 14px 0 4px;
+}
+
+.unit-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.unit-picker-head .section-title {
+  margin: 0;
+}
+
+.unit-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font-size: 0.85rem;
+  color: var(--blue);
+}
+
+.unit-summary {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.shuffle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shuffle-label small {
+  font-size: 0.75rem;
+  font-weight: 400;
+}

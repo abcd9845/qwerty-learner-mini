@@ -108,6 +108,26 @@ describe('本地用户 profile', () => {
     expect(profiles.getProfileStore().profiles).toHaveLength(0)
   })
 
+  it('shuffle 设置：默认 true，旧数据无字段按 true，导出导入往返保留', async () => {
+    const { storage } = await fresh()
+    storage.createProfile('小明')
+    expect(storage.getData().settings.shuffle).toBe(true) // 新用户/无字段的旧数据都按随机
+    storage.setSettings({ shuffle: false })
+    expect(storage.getData().settings.shuffle).toBe(false)
+
+    const dump = storage.exportData()
+    expect(JSON.parse(dump).data.settings.shuffle).toBe(false)
+    storage.setSettings({ shuffle: true })
+    expect(storage.importData(dump)).toBe(true)
+    expect(storage.getData().settings.shuffle).toBe(false) // 导入恢复关闭状态
+
+    // 旧版导出（settings 里没有 shuffle 字段）→ 按默认 true 迁移
+    expect(
+      storage.importData(JSON.stringify({ version: 1, settings: {}, progress: {}, daily: {}, mistakes: {} }))
+    ).toBe(true)
+    expect(storage.getData().settings.shuffle).toBe(true)
+  })
+
   it('导出/导入按当前用户：带用户名、不含其它用户数据', async () => {
     const { ls, storage } = await fresh()
     const a = storage.createProfile('小明')

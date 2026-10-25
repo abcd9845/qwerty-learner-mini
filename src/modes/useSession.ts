@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { WORDS, type Word } from '../data/words'
-import { poolOf, todayInfo } from '../lib/pool'
+import { orderPool, poolOf, todayInfo } from '../lib/pool'
 import { getData, recordAnswer, wordKey, type ModeId } from '../lib/storage'
-import { shuffled } from '../lib/util'
 
 export type SessionSource = 'today' | 'free' | 'mistakes'
 
@@ -16,12 +15,13 @@ export interface SessionStats {
 
 function buildQueueFor(src: SessionSource, mode: ModeId): Word[] {
   const d = getData()
+  // 出题顺序跟随设置：shuffle 开 = 随机；关 = 课本顺序（到期复习仍优先于新词）
   if (src === 'mistakes') {
-    return shuffled(WORDS.filter((w) => d.mistakes[wordKey(w.word)] !== undefined))
+    return orderPool(WORDS.filter((w) => d.mistakes[wordKey(w.word)] !== undefined), d.settings.shuffle)
   }
   let pool = poolOf(d.settings.units)
   if (mode === 'cloze') pool = pool.filter((w) => w.word.includes(' '))
-  if (src === 'free') return shuffled(pool).slice(0, FREE_CAP)
+  if (src === 'free') return orderPool(pool, d.settings.shuffle).slice(0, FREE_CAP)
   return todayInfo(d, pool).queue
 }
 

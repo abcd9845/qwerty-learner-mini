@@ -37,6 +37,8 @@ export interface Settings {
   volume: number
   /** 键盘音效（WebAudio 合成） */
   keySound: boolean
+  /** 打乱出题顺序：true=随机出题（到期复习仍优先于新词）；false=按课本顺序（Starter→Unit 6） */
+  shuffle: boolean
   /** 上次使用的练习模式 */
   lastMode: ModeId
 }
@@ -69,6 +71,7 @@ const DEFAULT_DATA: AppData = {
     rate: 0.85,
     volume: 1,
     keySound: false,
+    shuffle: true,
     lastMode: 'dictation',
   },
   progress: {},
@@ -101,6 +104,8 @@ function sanitize(raw: unknown): AppData {
       rate: typeof s.rate === 'number' ? Math.min(Math.max(s.rate, 0.5), 0.85) : 0.85,
       volume: typeof s.volume === 'number' ? Math.min(Math.max(s.volume, 0), 1) : 1,
       keySound: Boolean(s.keySound),
+      // 旧数据没有 shuffle 字段时按 true（随机），只有显式 false 才关闭
+      shuffle: s.shuffle !== false,
       lastMode: (['dictation', 'listening', 'choice', 'cloze'] as const).includes(s.lastMode as ModeId)
         ? (s.lastMode as ModeId)
         : 'dictation',

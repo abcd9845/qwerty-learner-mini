@@ -34,7 +34,8 @@
 ### 其它
 
 - 每词掌握度条（0~5）、今日完成、连续打卡、正确率、错题本专项练习
-- 设置：单元多选、每日新词、自动朗读、显示中文、语速/音量、键盘音效（WebAudio 合成）、清空进度（仅当前用户）
+- 首页可直接多选单元（Starter / Unit 1~6，全选/清空快捷，与设置页同步，至少保留 1 个）并开关「打乱出题顺序」：开=随机出题（到期复习仍优先于新词），关=按课本顺序（Starter→Unit 6）出题
+- 设置：单元多选、每日新词、打乱出题顺序、自动朗读、显示中文、语速/音量、键盘音效（WebAudio 合成）、清空进度（仅当前用户）
 - 进度导出/导入 JSON（文本框复制粘贴，按当前用户）
 - 深浅色主题跟随系统；练习层常驻隐藏 input（不随切词重挂载）、手势内聚焦、按钮不抢焦点，软键盘不收起；`autocapitalize/autocorrect/spellcheck` 全关
 - PWA：manifest + service worker 离线缓存静态资源（注意 GitHub Pages 子路径 `/qwerty-learner-mini/`）
@@ -43,7 +44,7 @@
 
 ```bash
 npm install
-npm test        # vitest：srs / util / profiles（本地用户、隔离、迁移）单元测试
+npm test        # vitest：srs / util / pool / profiles（本地用户、隔离、迁移）单元测试
 npm run dev     # 本地开发
 npm run build   # tsc --noEmit && vite build
 npm run preview # 本地预览 dist
@@ -60,7 +61,7 @@ src/
     storage.ts         # 按当前用户持久化 AppData（进度/设置/统计/错题本）
     speech.ts          # speechSynthesis 朗读封装
     sound.ts           # WebAudio 键盘音效
-    pool.ts            # 单元筛选 + 今日队列
+    pool.ts            # 单元筛选 + 出题顺序（shuffle 开/关）+ 今日队列（含 pool.test.ts 单测）
     util.ts            # 洗牌 / 干扰项挑选等
   modes/               # 四种练习模式 + 会话/打字状态机
   pages/               # 首页 / 统计 / 错题本 / 设置 / 首次建用户引导

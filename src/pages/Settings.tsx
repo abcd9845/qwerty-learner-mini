@@ -84,6 +84,14 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
           <input type="checkbox" checked={s.showChinese} onChange={(e) => setSettings({ showChinese: e.target.checked })} />
         </label>
         <label className="switch-row">
+          <span>打乱出题顺序</span>
+          <input type="checkbox" checked={s.shuffle} onChange={(e) => setSettings({ shuffle: e.target.checked })} />
+        </label>
+        <p className="dim">
+          开：词序随机（今日复习、新词、自由练习、错题练习都随机，但「到期复习优先于新词」保留：先随机的到期词，再随机新词）；
+          关：按课本顺序（Starter→Unit 1→…→Unit 6，单元内原顺序）出题，到期复习仍优先，但各组内按课本顺序。选择题干扰项的随机性不受影响。
+        </p>
+        <label className="switch-row">
           <span>键盘音效（WebAudio 合成）</span>
           <input type="checkbox" checked={s.keySound} onChange={(e) => setSettings({ keySound: e.target.checked })} />
         </label>

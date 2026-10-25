@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProfileManager } from '../components/ProfileManager'
 import { computeStreak, dayKey } from '../lib/srs'
 import { poolOf, todayInfo } from '../lib/pool'
-import { useAppData, type ModeId } from '../lib/storage'
+import { ALL_UNITS, setSettings, useAppData, type ModeId } from '../lib/storage'
 import { useProfileStore } from '../lib/profiles'
 import { MODES, modeName } from '../modes'
+import type { Unit } from '../data/words'
 import type { SessionSource } from '../modes/useSession'
 
 interface HomeProps {
@@ -16,12 +17,37 @@ export function Home({ onStart, goPage }: HomeProps) {
   const data = useAppData()
   const { profiles, currentId } = useProfileStore()
   const [mgrOpen, setMgrOpen] = useState(false)
+  const [hint, setHint] = useState<string | null>(null)
+  const hintTimer = useRef<number>(0)
   const currentName = profiles.find((p) => p.id === currentId)?.name ?? '同学'
+  // 空选择在数据层视为全部；首页直接按「全选」展示，两处（设置页/首页）共用同一份 settings.units
+  const selected: Unit[] = data.settings.units.length > 0 ? data.settings.units : [...ALL_UNITS]
   const pool = useMemo(() => poolOf(data.settings.units), [data.settings.units])
   const info = useMemo(() => todayInfo(data, pool), [data, pool])
   const mistakeCount = Object.keys(data.mistakes).length
   const todayStat = data.daily[dayKey(Date.now())]
   const streak = computeStreak(data.daily)
+
+  useEffect(() => () => window.clearTimeout(hintTimer.current), [])
+
+  const flashHint = (text: string) => {
+    setHint(text)
+    window.clearTimeout(hintTimer.current)
+    hintTimer.current = window.setTimeout(() => setHint(null), 2500)
+  }
+
+  /** 至少保留 1 个单元：取消到 0 个时不生效，自动回到全选 */
+  const applyUnits = (next: Unit[]) => {
+    if (next.length === 0) {
+      setSettings({ units: [...ALL_UNITS] })
+      flashHint('至少保留 1 个单元，已回到全选')
+      return
+    }
+    setSettings({ units: next })
+  }
+
+  const toggleUnit = (u: Unit) =>
+    applyUnits(selected.includes(u) ? selected.filter((x) => x !== u) : [...selected, u])
 
   return (
     <div className="page home">
@@ -34,6 +60,49 @@ export function Home({ onStart, goPage }: HomeProps) {
       </header>
 
       {mgrOpen && <ProfileManager onClose={() => setMgrOpen(false)} />}
+
+      <section className="settings-group unit-picker" aria-label="选择单元">
+        <div className="unit-picker-head">
+          <h2 className="section-title">选择单元</h2>
+          <div className="unit-actions">
+            <button className="text-btn" onClick={() => setSettings({ units: [...ALL_UNITS] })}>
+              全选
+            </button>
+            <button className="text-btn" onClick={() => applyUnits([])}>
+              清空
+            </button>
+          </div>
+        </div>
+        <div className="chips">
+          {ALL_UNITS.map((u) => (
+            <button
+              key={u}
+              className={`chip ${selected.includes(u) ? 'on' : ''}`}
+              aria-pressed={selected.includes(u)}
+              onClick={() => toggleUnit(u)}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+        <p className="dim unit-summary">
+          已选 {selected.length} 个单元，共 {pool.length} 词
+        </p>
+        <label className="switch-row">
+          <span className="shuffle-label">
+            打乱出题顺序
+            <small className="dim">
+              {data.settings.shuffle ? '开：随机出题（到期复习仍优先于新词）' : '关：按课本顺序出题（Starter→Unit 6）'}
+            </small>
+          </span>
+          <input
+            type="checkbox"
+            checked={data.settings.shuffle}
+            onChange={(e) => setSettings({ shuffle: e.target.checked })}
+          />
+        </label>
+        {hint && <p className="bad">{hint}</p>}
+      </section>
 
       <button className="today-card" onClick={() => onStart(data.settings.lastMode, info.queue.length > 0 ? 'today' : 'free')}>
         <div className="today-info">
