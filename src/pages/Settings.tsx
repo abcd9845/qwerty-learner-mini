@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { PageHeader } from '../components/PageHeader'
 import { speak } from '../lib/speech'
-import { ALL_UNITS, clearProgress, currentProfile, exportData, importData, setSettings, useAppData } from '../lib/storage'
+import { ALL_UNITS, DAILY_NEW_OPTIONS, DAILY_NEW_UNLIMITED, clearProgress, currentProfile, exportData, importData, setSettings, useAppData } from '../lib/storage'
 import type { Unit } from '../data/words'
 
-const DAILY_OPTIONS = [5, 10, 20, 30]
+const dailyLabel = (n: number) => (n === DAILY_NEW_UNLIMITED ? '不限' : String(n))
 
 export function SettingsPage({ onBack }: { onBack: () => void }) {
   const data = useAppData()
@@ -65,12 +65,15 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
       <section className="settings-group">
         <h2>每日新词数</h2>
         <div className="seg">
-          {DAILY_OPTIONS.map((n) => (
+          {DAILY_NEW_OPTIONS.map((n) => (
             <button key={n} className={`seg-btn ${s.dailyNew === n ? 'on' : ''}`} onClick={() => setSettings({ dailyNew: n })}>
-              {n}
+              {dailyLabel(n)}
             </button>
           ))}
         </div>
+        <p className="dim">
+          不限：今日队列包含全部到期复习词 + 所选单元里全部没学过的新词（到期词仍优先）；5/10/20/30：新词按额度补充，今天已学的新词占用额度。
+        </p>
       </section>
 
       <section className="settings-group">

@@ -92,14 +92,17 @@ export function computeStreak(daily: Record<string, { completed: number }>, now:
   return streak
 }
 
+/** 每日新词数的「不限」哨兵值：0 表示不限制新词额度（可序列化，Infinity 不行） */
+export const DAILY_NEW_UNLIMITED = 0
+
 export interface QueueOptions<T> {
   items: T[]
   keyOf: (item: T) => string
   progress: Record<string, SrsState>
   now: number
-  /** 每日新词上限 */
+  /** 每日新词上限；0（DAILY_NEW_UNLIMITED）= 不限，今日新词全部入队 */
   dailyNew: number
-  /** 今天已经练过的新词数（占额度） */
+  /** 今天已经练过的新词数（占额度）；不限模式下无意义 */
   newToday?: number
 }
 
@@ -110,7 +113,7 @@ export interface QueueResult<T> {
   newCount: number
 }
 
-/** 生成「今日队列」：先出到期词，再补新词（不超过每日新词额度） */
+/** 生成「今日队列」：先出到期词，再补新词（每日新词 0 = 不限时全补，否则不超过额度） */
 export function buildQueue<T>(opts: QueueOptions<T>): QueueResult<T> {
   const seen: T[] = []
   const fresh: T[] = []
@@ -123,7 +126,8 @@ export function buildQueue<T>(opts: QueueOptions<T>): QueueResult<T> {
     .filter((it) => isDue(opts.progress[opts.keyOf(it)]!, opts.now))
     .sort((a, b) => opts.progress[opts.keyOf(a)]!.dueAt - opts.progress[opts.keyOf(b)]!.dueAt)
 
-  const allowance = Math.max(0, opts.dailyNew - (opts.newToday ?? 0))
+  // 不限（0）时额度视为 Infinity：新词全量入队，newToday 不再占用额度
+  const allowance = opts.dailyNew === DAILY_NEW_UNLIMITED ? Infinity : Math.max(0, opts.dailyNew - (opts.newToday ?? 0))
   const news = fresh.slice(0, allowance)
 
   return { queue: [...due, ...news], dueCount: due.length, newCount: news.length }

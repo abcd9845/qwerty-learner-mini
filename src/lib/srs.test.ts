@@ -5,6 +5,7 @@ import {
   boxAfterWrong,
   buildQueue,
   computeStreak,
+  DAILY_NEW_UNLIMITED,
   DAY_MS,
   dayKey,
   isDue,
@@ -130,5 +131,13 @@ describe('buildQueue', () => {
     const r = buildQueue({ items, keyOf: (x) => x, progress, now: NOW, dailyNew: 5, newToday: 5 })
     expect(r.queue).toEqual(['a'])
     expect(r.newCount).toBe(0)
+  })
+
+  it('不限（DAILY_NEW_UNLIMITED）：新词全部入队，newToday 不占用额度', () => {
+    const progress = { a: { box: 1, dueAt: NOW } }
+    const r = buildQueue({ items, keyOf: (x) => x, progress, now: NOW, dailyNew: DAILY_NEW_UNLIMITED, newToday: 99 })
+    expect(r.queue).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
+    expect(r.dueCount).toBe(1)
+    expect(r.newCount).toBe(5)
   })
 })

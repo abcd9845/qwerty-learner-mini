@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProfileManager } from '../components/ProfileManager'
 import { computeStreak, dayKey } from '../lib/srs'
 import { poolOf, todayInfo } from '../lib/pool'
-import { ALL_UNITS, setSettings, useAppData, type ModeId } from '../lib/storage'
+import { ALL_UNITS, DAILY_NEW_UNLIMITED, setSettings, useAppData, type ModeId } from '../lib/storage'
 import { useProfileStore } from '../lib/profiles'
 import { MODES, modeName } from '../modes'
 import type { Unit } from '../data/words'
@@ -108,7 +108,9 @@ export function Home({ onStart, goPage }: HomeProps) {
         <div className="today-info">
           <h2>今日复习</h2>
           {info.queue.length > 0 ? (
-            <p>到期 {info.dueCount} 词 · 新词 {info.newCount} 词</p>
+            <p>
+              到期 {info.dueCount} 词 · {data.settings.dailyNew === DAILY_NEW_UNLIMITED ? `新词不限（待学 ${info.newCount} 词）` : `新词 ${info.newCount} 词`}
+            </p>
           ) : (
             <p>今日任务已完成 🎉 点这里自由练习</p>
           )}

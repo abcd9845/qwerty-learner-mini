@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Word } from '../data/words'
+import { DAILY_NEW_UNLIMITED } from './srs'
 
 /**
  * 本地用户（profile）测试：创建/切换/重命名/删除、数据隔离、旧版数据迁移、按用户导出导入。
@@ -126,6 +127,38 @@ describe('本地用户 profile', () => {
       storage.importData(JSON.stringify({ version: 1, settings: {}, progress: {}, daily: {}, mistakes: {} }))
     ).toBe(true)
     expect(storage.getData().settings.shuffle).toBe(true)
+  })
+
+  it('每日新词：新用户默认不限（0），0 合法可往返，旧值保留，非法/缺字段回退不限', async () => {
+    const { storage } = await fresh()
+    storage.createProfile('小明')
+    expect(storage.getData().settings.dailyNew).toBe(DAILY_NEW_UNLIMITED) // 新用户默认不限
+
+    storage.setSettings({ dailyNew: 0 })
+    expect(storage.getData().settings.dailyNew).toBe(0) // 0 是合法值
+    const dump = storage.exportData()
+    expect(JSON.parse(dump).data.settings.dailyNew).toBe(0)
+    storage.setSettings({ dailyNew: 30 })
+    expect(storage.importData(dump)).toBe(true)
+    expect(storage.getData().settings.dailyNew).toBe(0) // 导出/导入往返保留不限
+
+    // 旧用户已选的 5/10/20/30 原样保留
+    expect(
+      storage.importData(JSON.stringify({ version: 1, settings: { dailyNew: 20 }, progress: {}, daily: {}, mistakes: {} }))
+    ).toBe(true)
+    expect(storage.getData().settings.dailyNew).toBe(20)
+
+    // 非法值 / 缺字段都回退到不限
+    for (const bad of [7, -5, 'abc', null]) {
+      expect(
+        storage.importData(JSON.stringify({ version: 1, settings: { dailyNew: bad }, progress: {}, daily: {}, mistakes: {} }))
+      ).toBe(true)
+      expect(storage.getData().settings.dailyNew).toBe(DAILY_NEW_UNLIMITED)
+    }
+    expect(
+      storage.importData(JSON.stringify({ version: 1, settings: {}, progress: {}, daily: {}, mistakes: {} }))
+    ).toBe(true)
+    expect(storage.getData().settings.dailyNew).toBe(DAILY_NEW_UNLIMITED)
   })
 
   it('导出/导入按当前用户：带用户名、不含其它用户数据', async () => {

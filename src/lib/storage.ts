@@ -7,7 +7,7 @@
  */
 import { useSyncExternalStore } from 'react'
 import type { Unit, Word } from '../data/words'
-import { boxAfterCorrect, boxAfterWrong, dayKey, type WordProgress } from './srs'
+import { boxAfterCorrect, boxAfterWrong, DAILY_NEW_UNLIMITED, dayKey, type WordProgress } from './srs'
 import {
   createProfile as createProfileOp,
   deleteProfile as deleteProfileOp,
@@ -22,10 +22,16 @@ import {
 
 export type ModeId = 'dictation' | 'listening' | 'choice' | 'cloze'
 
+/** 每日新词数的「不限」哨兵值（0），与 srs.ts 同源 */
+export { DAILY_NEW_UNLIMITED } from './srs'
+
+/** 设置页可选的每日新词数（末位为不限） */
+export const DAILY_NEW_OPTIONS: readonly number[] = [5, 10, 20, 30, DAILY_NEW_UNLIMITED]
+
 export interface Settings {
   /** 选中的单元（空数组视为全部） */
   units: Unit[]
-  /** 每日新词数：5/10/20/30 */
+  /** 每日新词数：0=不限（默认）/ 5 / 10 / 20 / 30 */
   dailyNew: number
   /** 自动朗读（选择题读题、打完读词等） */
   autoRead: boolean
@@ -65,7 +71,7 @@ const DEFAULT_DATA: AppData = {
   version: 1,
   settings: {
     units: [...ALL_UNITS],
-    dailyNew: 10,
+    dailyNew: DAILY_NEW_UNLIMITED,
     autoRead: true,
     showChinese: false,
     rate: 0.85,
@@ -98,7 +104,8 @@ function sanitize(raw: unknown): AppData {
     version: 1,
     settings: {
       units: Array.isArray(s.units) ? s.units.filter((u): u is Unit => ALL_UNITS.includes(u as Unit)) : [...ALL_UNITS],
-      dailyNew: [5, 10, 20, 30].includes(Number(s.dailyNew)) ? Number(s.dailyNew) : 10,
+      // 0（不限）与 5/10/20/30 合法；旧用户已选的额度原样保留，缺字段/非法值回退到不限
+      dailyNew: [DAILY_NEW_UNLIMITED, 5, 10, 20, 30].includes(Number(s.dailyNew)) ? Number(s.dailyNew) : DAILY_NEW_UNLIMITED,
       autoRead: Boolean(s.autoRead),
       showChinese: Boolean(s.showChinese),
       rate: typeof s.rate === 'number' ? Math.min(Math.max(s.rate, 0.5), 0.85) : 0.85,

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { WORDS } from '../data/words'
-import { DAY_MS } from './srs'
+import { DAY_MS, dayKey, DAILY_NEW_UNLIMITED } from './srs'
 import { orderPool, poolOf, todayInfo } from './pool'
 import { ALL_UNITS, wordKey, type AppData, type Settings } from './storage'
 
 /** 造一份当前用户数据（默认全单元、每日新词额度足够大，方便看全队列） */
-function mkData(settings: Partial<Settings> = {}, progress: AppData['progress'] = {}): AppData {
+function mkData(
+  settings: Partial<Settings> = {},
+  progress: AppData['progress'] = {},
+  daily: AppData['daily'] = {},
+): AppData {
   return {
     version: 1,
     settings: {
@@ -21,7 +25,7 @@ function mkData(settings: Partial<Settings> = {}, progress: AppData['progress'] 
       ...settings,
     },
     progress,
-    daily: {},
+    daily,
     mistakes: {},
   }
 }
@@ -100,5 +104,41 @@ describe('todayInfo（今日队列在 shuffle 开/关下的行为）', () => {
       expect(r.queue.slice(0, r.dueCount).every((w) => dueKeys.has(wordKey(w.word)))).toBe(true)
       expect(r.queue.slice(r.dueCount).every((w) => !dueKeys.has(wordKey(w.word)))).toBe(true)
     }
+  })
+})
+
+describe('todayInfo（每日新词不限 / 有限额度）', () => {
+  const pool = poolOf(['Starter', 'Unit 1'])
+  const now = Date.now()
+  // 3 个已学到期词 + 1 个已学未到期词（不该出现），其余全是新词
+  const progress: AppData['progress'] = {}
+  for (const w of [pool[3], pool[0], pool[7]]) {
+    progress[wordKey(w.word)] = { box: 2, dueAt: now - 1000, correct: 1, wrong: 0, lastResult: 'correct', lastAt: now }
+  }
+  progress[wordKey(pool[1].word)] = { box: 5, dueAt: now + 14 * DAY_MS, correct: 3, wrong: 0, lastResult: 'correct', lastAt: now }
+  const freshAll = pool.filter((w) => progress[wordKey(w.word)] === undefined)
+  const dailyOf = (newWords: number): AppData['daily'] => ({
+    [dayKey(now)]: { completed: newWords, correct: newWords, wrong: 0, newWords },
+  })
+
+  it('不限（0）：到期词 + 全部未学新词都入队，今天已学的新词数不占用额度', () => {
+    const r = todayInfo(mkData({ dailyNew: DAILY_NEW_UNLIMITED, shuffle: false }, progress, dailyOf(40)), pool)
+    expect(r.dueCount).toBe(3)
+    expect(r.newCount).toBe(freshAll.length)
+    expect(r.queue).toEqual([pool[0], pool[3], pool[7], ...freshAll]) // 到期在前（课本序），新词全补
+    expect(r.queue.length).toBe(pool.length - 1) // 只有未到期词不出现
+  })
+
+  it('有限额度：仍按「额度 - 今日已学」补充新词', () => {
+    const r = todayInfo(mkData({ dailyNew: 5, shuffle: false }, progress, dailyOf(4)), pool)
+    expect(r.dueCount).toBe(3)
+    expect(r.newCount).toBe(1) // 5 - 4 = 1
+    expect(r.queue.slice(3)).toEqual(freshAll.slice(0, 1))
+  })
+
+  it('不限 + 全部单元：全新词库时一次队列包含全部词（几百词也正常出队）', () => {
+    const r = todayInfo(mkData({ dailyNew: DAILY_NEW_UNLIMITED, shuffle: false }), WORDS)
+    expect(r.queue).toEqual(WORDS) // 全新词库：全部入队，课本顺序
+    expect(r.newCount).toBe(WORDS.length)
   })
 })
